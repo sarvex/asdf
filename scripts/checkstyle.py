@@ -37,9 +37,9 @@ class c:
 
 def utilGetStrs(line: Any, m: Any):
     return (
-        line[0:m.start('match')],
-        line[m.start('match'):m.end('match')],
-        line[m.end('match'):]
+        line[: m.start('match')],
+        line[m.start('match') : m.end('match')],
+        line[m.end('match') :],
     )
 
 # Before: printf '%s\\n' '^w^'
@@ -99,12 +99,15 @@ def lintfile(file: Path, rules: List[Rule], options: Dict[str, Any]):
 
         for rule in rules:
             should_run = False
-            if 'sh' in rule['fileTypes']:
-                if file.name.endswith('.sh') or str(file.absolute()).endswith('bin/asdf'):
-                    should_run = True
-            if 'bash' in rule['fileTypes']:
-                if file.name.endswith('.bash') or file.name.endswith('.bats'):
-                    should_run = True
+            if 'sh' in rule['fileTypes'] and (
+                file.name.endswith('.sh')
+                or str(file.absolute()).endswith('bin/asdf')
+            ):
+                should_run = True
+            if 'bash' in rule['fileTypes'] and (
+                file.name.endswith('.bash') or file.name.endswith('.bats')
+            ):
+                should_run = True
 
             if options['verbose']:
                 print(f'{str(file)}: {should_run}')
@@ -113,9 +116,9 @@ def lintfile(file: Path, rules: List[Rule], options: Dict[str, Any]):
                 continue
 
             m = re.search(rule['regex'], line)
-            if m is not None and m.group('match') is not None:
+            if m is not None and m['match'] is not None:
                 dir = os.path.relpath(file.resolve(), Path.cwd())
-                prestr = line[0:m.start('match')]
+                prestr = line[:m.start('match')]
                 midstr = line[m.start('match'):m.end('match')]
                 poststr = line[m.end('match'):]
 
@@ -263,7 +266,7 @@ def main():
     for rule in rules:
         print(f'{c.MAGENTA}{rule["name"]}{c.RESET}: {rule["found"]}')
 
-    grand_total = sum([rule['found'] for rule in rules])
+    grand_total = sum(rule['found'] for rule in rules)
     print(f'GRAND TOTAL: {grand_total}')
 
     # exit
